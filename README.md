@@ -1,17 +1,18 @@
 <div align="center">
-  <a href="https://github.com/QEDProtocol/plonky2-hwa">
-    <h1 align="center">plonky2-hwa</h1>
-  </a>
+  
+  <h1 align="center"><a href="https://github.com/QEDProtocol/plonky2-hwa">plonky2-hwa</a></h1>
   <h3 align="center">Plonky2 with Modular, Pluggable Hardware Acceleration ⚡</h3>
-  <p align="center">
-    <br />
-    This fork of plonky2 supports hardware acceleration exposed via GenericConfig.
-    <br />
-    To see an example of how to use plonky2-hwa with Metal (Apple Silicon) acceleration, check out the <a href="https://github.com/QEDProtocol/plonky2-metal-demo">plonky2-metal-demo</a>.
-    <br />
-    Made with ❤️ by <a href="https://qedprotocol.com">QED</a>
-  </p>
 </div>
+<div align="left">
+  <br />
+  This fork of plonky2 supports hardware acceleration exposed via GenericConfig.
+  <br />
+  To see an example of how to use plonky2-hwa with Metal (Apple Silicon) acceleration, check out the <a href="https://github.com/QEDProtocol/plonky2-metal-demo">plonky2-metal-demo</a>.
+  <br />
+  Made with ❤️ by <a href="https://qedprotocol.com">QED</a>
+</div>
+<hr />
+<br />
 
 [![Discord](https://img.shields.io/discord/743511677072572486?logo=discord)](https://discord.gg/QZKRUpqCJ6)
 
