@@ -5,13 +5,16 @@
 </div>
 <div align="left">
   <br />
-  This fork of plonky2 supports hardware acceleration exposed via GenericConfig.
+  This fork adds support for hardware accelerated proving to plonky2 and starky.  
+  <br />
+  <br />
+  To keep things modular, individual hardware accelerators are not implemented directly in plonky2-hwa and instead can be configured via GenericConfig.
   <br />
   To see an example of how to use plonky2-hwa with Metal (Apple Silicon) acceleration, check out the <a href="https://github.com/QEDProtocol/plonky2-metal-demo">plonky2-metal-demo</a>.
   <br />
+  <br />
   Made with ❤️ by <a href="https://qedprotocol.com">QED</a>
 </div>
-<hr />
 <br />
 
 [![Discord](https://img.shields.io/discord/743511677072572486?logo=discord)](https://discord.gg/QZKRUpqCJ6)
