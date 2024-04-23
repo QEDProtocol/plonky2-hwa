@@ -1,19 +1,21 @@
 <div align="center">
-  
   <h1 align="center"><a href="https://github.com/QEDProtocol/plonky2-hwa">plonky2-hwa</a></h1>
   <h3 align="center">Plonky2 with Modular, Pluggable Hardware Acceleration ⚡</h3>
+  <br />
+  <p align="center">
+    <i>This repo adds support for hardware accelerated proving to plonky2 and starky.</i>
+  </p>
 </div>
 <div align="left">
   <br />
-  This fork adds support for hardware accelerated proving to plonky2 and starky.  
-  <br />
-  <br />
   To keep things modular, individual hardware accelerators are not implemented directly in plonky2-hwa and instead can be configured via GenericConfig.
+  <br />
   <br />
   To see an example of how to use plonky2-hwa with Metal (Apple Silicon) acceleration, check out the <a href="https://github.com/QEDProtocol/plonky2-metal-demo">plonky2-metal-demo</a>.
   <br />
   <br />
   Made with ❤️ by <a href="https://qedprotocol.com">QED</a>
+  <h2>&nbsp;</h2>
 </div>
 <br />
 
