@@ -1,4 +1,18 @@
-# Plonky2 & more
+<div align="center">
+  <a href="https://github.com/QEDProtocol/plonky2-hwa">
+    <h1 align="center">plonky2-hwa</h1>
+  </a>
+  <h3 align="center">Plonky2 with Modular, Pluggable Hardware Acceleration ⚡</h3>
+  <p align="center">
+    <br />
+    This fork of plonky2 supports hardware acceleration exposed via GenericConfig.
+    <br />
+    To see an example of how to use plonky2-hwa with Metal (Apple Silicon) acceleration, check out the <a href="https://github.com/QEDProtocol/plonky2-metal-demo">plonky2-metal-demo</a>.
+    <br />
+    Made with ❤️ by <a href="https://qedprotocol.com">QED</a>
+  </p>
+</div>
+
 [![Discord](https://img.shields.io/discord/743511677072572486?logo=discord)](https://discord.gg/QZKRUpqCJ6)
 
 This repository was originally for Plonky2, a SNARK implementation based on techniques from PLONK and FRI. It has since expanded to include tools such as Starky, a highly performant STARK implementation.
