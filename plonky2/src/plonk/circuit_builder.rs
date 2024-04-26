@@ -676,6 +676,11 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
         }
     }
 
+    /// return a copy of the targets to constants map
+    pub fn get_targets_to_constants_map(&self) -> HashMap<Target, F> {
+        self.targets_to_constants.clone()
+    }
+
     pub fn push_context(&mut self, level: log::Level, ctx: &str) {
         self.context_log.push(ctx, level, self.num_gates());
     }
