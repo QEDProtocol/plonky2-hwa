@@ -34,18 +34,8 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     {
         let selected_proof =
             self.select_proof_with_pis(condition, proof_with_pis0, proof_with_pis1);
-        let selected_verifier_data = VerifierCircuitTarget {
-            constants_sigmas_cap: self.select_cap(
-                condition,
-                &inner_verifier_data0.constants_sigmas_cap,
-                &inner_verifier_data1.constants_sigmas_cap,
-            ),
-            circuit_digest: self.select_hash(
-                condition,
-                inner_verifier_data0.circuit_digest,
-                inner_verifier_data1.circuit_digest,
-            ),
-        };
+        let selected_verifier_data =
+            self.select_verifier_data(condition, inner_verifier_data0, inner_verifier_data1);
 
         self.verify_proof::<C>(&selected_proof, &selected_verifier_data, inner_common_data);
     }
@@ -75,7 +65,7 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
     }
 
     /// Computes `if b { proof_with_pis0 } else { proof_with_pis1 }`.
-    fn select_proof_with_pis(
+    pub fn select_proof_with_pis(
         &mut self,
         b: BoolTarget,
         proof_with_pis0: &ProofWithPublicInputsTarget<D>,
@@ -177,6 +167,23 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilder<F, D> {
             .zip_eq(v1)
             .map(|(c0, c1)| self.select_cap(b, c0, c1))
             .collect()
+    }
+
+    /// Computes `if b { vk0 } else { vk1 }`.
+    pub fn select_verifier_data(
+        &mut self,
+        b: BoolTarget,
+        vk0: &VerifierCircuitTarget,
+        vk1: &VerifierCircuitTarget,
+    ) -> VerifierCircuitTarget {
+        VerifierCircuitTarget {
+            constants_sigmas_cap: self.select_cap(
+                b,
+                &vk0.constants_sigmas_cap,
+                &vk1.constants_sigmas_cap,
+            ),
+            circuit_digest: self.select_hash(b, vk0.circuit_digest, vk1.circuit_digest),
+        }
     }
 
     /// Computes `if b { os0 } else { os1 }`.
@@ -363,7 +370,7 @@ mod tests {
         let mut builder = CircuitBuilder::<F, D>::new(config.clone());
         let mut pw = PartialWitness::new();
         let t = builder.add_virtual_target();
-        pw.set_target(t, F::rand());
+        pw.set_target(t, F::rand())?;
         builder.register_public_input(t);
         let _t2 = builder.square(t);
         for _ in 0..64 {
@@ -381,15 +388,15 @@ mod tests {
         let mut builder = CircuitBuilder::<F, D>::new(config);
         let mut pw = PartialWitness::new();
         let pt = builder.add_virtual_proof_with_pis(&data.common);
-        pw.set_proof_with_pis_target(&pt, &proof);
+        pw.set_proof_with_pis_target(&pt, &proof)?;
         let dummy_pt = builder.add_virtual_proof_with_pis(&data.common);
-        pw.set_proof_with_pis_target::<C, D>(&dummy_pt, &dummy_proof);
+        pw.set_proof_with_pis_target::<C, D>(&dummy_pt, &dummy_proof)?;
         let inner_data =
             builder.add_virtual_verifier_data(data.common.config.fri_config.cap_height);
-        pw.set_verifier_data_target(&inner_data, &data.verifier_only);
+        pw.set_verifier_data_target(&inner_data, &data.verifier_only)?;
         let dummy_inner_data =
             builder.add_virtual_verifier_data(data.common.config.fri_config.cap_height);
-        pw.set_verifier_data_target(&dummy_inner_data, &dummy_data.verifier_only);
+        pw.set_verifier_data_target(&dummy_inner_data, &dummy_data.verifier_only)?;
         let b = builder.constant_bool(F::rand().0 % 2 == 0);
         builder.conditionally_verify_proof::<C>(
             b,

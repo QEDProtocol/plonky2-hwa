@@ -152,7 +152,7 @@ impl<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>
     MockCircuitData<F, C, D>
 {
     pub fn generate_witness(&self, inputs: PartialWitness<F>) -> PartitionWitness<F> {
-        generate_partial_witness::<F, C, D>(inputs, &self.prover_only, &self.common)
+        generate_partial_witness::<F, C, D>(inputs, &self.prover_only, &self.common).unwrap()
     }
 }
 
@@ -363,7 +363,7 @@ pub struct ProverOnlyCircuitData<
     pub circuit_digest: <<C as GenericConfig<D>>::Hasher as Hasher<F>>::Hash,
     ///The concrete placement of the lookup gates for each lookup table index.
     pub lookup_rows: Vec<LookupWire>,
-    /// A vector of (looking_in, looking_out) pairs for for each lookup table index.
+    /// A vector of (looking_in, looking_out) pairs for each lookup table index.
     pub lut_to_lookups: Vec<Lookup>,
 }
 
