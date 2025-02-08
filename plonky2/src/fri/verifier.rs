@@ -240,6 +240,146 @@ fn fri_verifier_query_round<
     Ok(())
 }
 
+pub fn verify_fri_proof_v2<
+    F: RichField + Extendable<D>,
+    C: GenericConfig<D, F = F>,
+    const D: usize,
+>(
+    instance: &FriInstanceInfo<F, D>,
+    openings: &FriOpenings<F, D>,
+    challenges: &FriChallenges<F, D>,
+    initial_merkle_caps: &[&MerkleCap<F, C::Hasher>],
+    proof: &FriProof<F, C::Hasher, D>,
+    params: &FriParams,
+) -> Result<()> {
+    validate_fri_proof_shape::<F, C, D>(proof, instance, params)?;
+
+    // Size of the LDE domain.
+    let n = params.lde_size();
+
+    // Check PoW.
+    fri_verify_proof_of_work(challenges.fri_pow_response, &params.config)?;
+
+    // Check that parameters are coherent.
+    ensure!(
+        params.config.num_query_rounds == proof.query_round_proofs.len(),
+        "Number of query rounds does not match config."
+    );
+
+    let precomputed_reduced_evals =
+        PrecomputedReducedOpenings::from_os_and_alpha(openings, challenges.fri_alpha);
+    for (&x_index, round_proof) in challenges
+        .fri_query_indices
+        .iter()
+        .zip(&proof.query_round_proofs)
+    {
+        fri_verifier_query_round_v2::<F, C, D>(
+            instance,
+            challenges,
+            &precomputed_reduced_evals,
+            initial_merkle_caps,
+            proof,
+            x_index,
+            n,
+            round_proof,
+            params,
+        )?;
+    }
+
+    Ok(())
+}
+
+fn fri_verify_initial_proof_v2<F: RichField, H: Hasher<F>>(
+    x_index: usize,
+    proof: &FriInitialTreeProof<F, H>,
+    initial_merkle_caps: &[&MerkleCap<F, H>],
+) -> Result<()> {
+    for ((evals, merkle_proof), cap) in proof.evals_proofs.iter().zip(initial_merkle_caps) {
+        verify_merkle_proof_to_cap::<F, H>(evals.clone(), x_index, cap, merkle_proof)?;
+    }
+
+    Ok(())
+}
+
+fn fri_verifier_query_round_v2<
+    F: RichField + Extendable<D>,
+    C: GenericConfig<D, F = F>,
+    const D: usize,
+>(
+    instance: &FriInstanceInfo<F, D>,
+    challenges: &FriChallenges<F, D>,
+    precomputed_reduced_evals: &PrecomputedReducedOpenings<F, D>,
+    initial_merkle_caps: &[&MerkleCap<F, C::Hasher>],
+    proof: &FriProof<F, C::Hasher, D>,
+    mut x_index: usize,
+    n: usize,
+    round_proof: &FriQueryRound<F, C::Hasher, D>,
+    params: &FriParams,
+) -> Result<()> {
+    fri_verify_initial_proof_v2::<F, C::Hasher>(
+        x_index,
+        &round_proof.initial_trees_proof,
+        initial_merkle_caps,
+    )?;
+    // `subgroup_x` is `subgroup[x_index]`, i.e., the actual field element in the domain.
+    let log_n = log2_strict(n);
+    let mut subgroup_x = F::MULTIPLICATIVE_GROUP_GENERATOR
+        * F::primitive_root_of_unity(log_n).exp_u64(reverse_bits(x_index, log_n) as u64);
+
+    // old_eval is the last derived evaluation; it will be checked for consistency with its
+    // committed "parent" value in the next iteration.
+    let mut old_eval = fri_combine_initial::<F, C, D>(
+        instance,
+        &round_proof.initial_trees_proof,
+        challenges.fri_alpha,
+        subgroup_x,
+        precomputed_reduced_evals,
+        params,
+    );
+
+    for (i, &arity_bits) in params.reduction_arity_bits.iter().enumerate() {
+        let arity = 1 << arity_bits;
+        let evals = &round_proof.steps[i].evals;
+
+        // Split x_index into the index of the coset x is in, and the index of x within that coset.
+        let coset_index = x_index >> arity_bits;
+        let x_index_within_coset = x_index & (arity - 1);
+
+        // Check consistency with our old evaluation from the previous round.
+        ensure!(evals[x_index_within_coset] == old_eval);
+
+        // Infer P(y) from {P(x)}_{x^arity=y}.
+        old_eval = compute_evaluation(
+            subgroup_x,
+            x_index_within_coset,
+            arity_bits,
+            evals,
+            challenges.fri_betas[i],
+        );
+
+        verify_merkle_proof_to_cap::<F, C::Hasher>(
+            flatten(evals),
+            coset_index,
+            &proof.commit_phase_merkle_caps[i],
+            &round_proof.steps[i].merkle_proof,
+        )?;
+
+        // Update the point x to x^arity.
+        subgroup_x = subgroup_x.exp_power_of_2(arity_bits);
+
+        x_index = coset_index;
+    }
+
+    // Final check of FRI. After all the reductions, we check that the final polynomial is equal
+    // to the one sent by the prover.
+    ensure!(
+        proof.final_poly.eval(subgroup_x.into()) == old_eval,
+        "Final polynomial evaluation is invalid."
+    );
+
+    Ok(())
+}
+
 /// For each opening point, holds the reduced (by `alpha`) evaluations of each polynomial that's
 /// opened at that point.
 #[derive(Clone, Debug)]
